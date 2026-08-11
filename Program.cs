@@ -1,3 +1,6 @@
+using amazonmini;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -5,6 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// Get connection string from .net user secrets
+var ConnectionString = builder.Configuration["ConnectionString"];
+
+// Set up PostgreSQL database connection
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(ConnectionString));
 
 var app = builder.Build();
 
