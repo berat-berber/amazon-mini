@@ -1,6 +1,6 @@
 ﻿namespace amazonmini;
 
-public class OrderProducts
+public class OrderItems
 {
     public string ProductId { get; set; } = string.Empty;
     public Product Product { get; set; } = null!;
@@ -12,7 +12,7 @@ public class OrderProducts
 
     public decimal PriceDuringOrder { get; private set; }
 
-    public OrderProducts(int quantity, decimal priceDuringOrder)
+    public OrderItems(int quantity, decimal priceDuringOrder)
     {
 
         if(quantity <= 0)
