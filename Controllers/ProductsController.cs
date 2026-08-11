@@ -2,6 +2,7 @@ using amazonmini;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace amazonmini.Namespace
 {
@@ -10,30 +11,49 @@ namespace amazonmini.Namespace
     public class ProductsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IMemoryCache _cache;
 
-        public ProductsController(AppDbContext context)
+        private static readonly MemoryCacheEntryOptions Options = new()
+        {
+            SlidingExpiration = TimeSpan.FromSeconds(30),
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+        };
+
+        public ProductsController(AppDbContext context, IMemoryCache cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         [HttpGet]
         public async Task<ActionResult> GetProducts([FromQuery] string? search)
         {
-            var query = _context.Products.AsQueryable();
-
             if (!string.IsNullOrWhiteSpace(search))
             {
-                query = query.Where(p => EF.Functions.ILike(p.Name, $"%{search}%"));
+                var matches = await _context.Products
+                    .Where(p => EF.Functions.ILike(p.Name, $"%{search}%"))
+                    .ToListAsync();
+                return Ok(matches);
             }
 
-            var products = await query.ToListAsync();
+            var products = await _cache.GetOrCreateAsync("products:all", async entry =>
+            {
+                entry.SetOptions(Options);
+                return await _context.Products.ToListAsync();
+            });
+
             return Ok(products);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult> GetProduct([FromRoute] string id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product = await _cache.GetOrCreateAsync($"product:{id}", async entry =>
+            {
+                entry.SetOptions(Options);
+                return await _context.Products.FindAsync(id);
+            });
+
             if (product == null)
             {
                 return NotFound();
