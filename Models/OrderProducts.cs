@@ -3,11 +3,11 @@
 public class OrderProducts
 {
     public string ProductId { get; set; } = string.Empty;
-    public Product? Product { get; set; }
+    public Product Product { get; set; }
 
     public string OrderId { get; set; } = string.Empty;
-    public Order? Order { get; set; }
-    
+    public Order Order { get; set; }
+
     public int Quantity { get; private set; }
 
     public decimal PriceDuringOrder { get; private set; }
