@@ -1,4 +1,5 @@
 using amazonmini;
+using amazonmini.Services;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
@@ -16,6 +17,8 @@ var ConnectionString = builder.Configuration["ConnectionString"];
 // Set up PostgreSQL database connection
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(ConnectionString));
+
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 var app = builder.Build();
 

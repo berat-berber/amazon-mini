@@ -38,4 +38,19 @@ public class Product
         Quantity = quantity;
 
     }
+
+    public void DecrementStock(int quantity)
+    {
+        if(quantity <= 0)
+        {
+            throw new ArgumentException("Quantity must be greater than zero");
+        }
+
+        if(Quantity < quantity)
+        {
+            throw new InvalidOperationException("Insufficient stock");
+        }
+
+        Quantity -= quantity;
+    }
 }
