@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace MyApp.Namespace
+namespace amazonmini.Namespace
 {
     [Route("api/[controller]")]
     [ApiController]
