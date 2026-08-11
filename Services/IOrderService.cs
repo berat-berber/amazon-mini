@@ -1,8 +1,8 @@
-using amazonmini;
+using amazonmini.DTOs;
 
 namespace amazonmini.Services;
 
 public interface IOrderService
 {
-    Task<Order> CreateOrderAsync(string customerName, IReadOnlyDictionary<string, int> items);
+    Task<OrderResponse> CreateOrderAsync(CreateOrderRequest request);
 }
