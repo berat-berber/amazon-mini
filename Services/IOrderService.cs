@@ -5,4 +5,6 @@ namespace amazonmini.Services;
 public interface IOrderService
 {
     Task<OrderResponse> CreateOrderAsync(CreateOrderRequest request);
+    Task<OrderResponse?> GetOrderAsync(string id);
+    Task<List<OrderResponse>> GetOrdersAsync();
 }

@@ -5,6 +5,7 @@ public class OrderResponse
     public string Id { get; set; } = string.Empty;
     public string CustomerName { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public decimal TotalAmount => Items.Sum(i => i.Quantity * i.PriceDuringOrder);
     public List<OrderItemResponse> Items { get; set; } = new();
 }
 

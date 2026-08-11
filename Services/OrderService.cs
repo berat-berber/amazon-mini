@@ -69,4 +69,62 @@ public class OrderService : IOrderService
             Items = itemResponses
         };
     }
+
+    public async Task<OrderResponse?> GetOrderAsync(string id)
+    {
+        var order = await _context.Orders.FindAsync(id);
+        if (order is null)
+        {
+            return null;
+        }
+
+        var items = await _context.OrderItems
+            .Where(i => i.OrderId == id)
+            .Include(i => i.Product)
+            .ToListAsync();
+
+        return new OrderResponse
+        {
+            Id = order.Id,
+            CustomerName = order.CustomerName,
+            CreatedAt = order.CreatedAt,
+            Items = items.Select(i => new OrderItemResponse
+            {
+                ProductId = i.ProductId,
+                ProductName = i.Product.Name,
+                Quantity = i.Quantity,
+                PriceDuringOrder = i.PriceDuringOrder
+            }).ToList()
+        };
+    }
+
+    public async Task<List<OrderResponse>> GetOrdersAsync()
+    {
+        var orders = await _context.Orders.ToListAsync();
+        var responses = new List<OrderResponse>();
+
+        foreach (var order in orders)
+        {
+            var items = await _context.OrderItems
+                .Where(i => i.OrderId == order.Id)
+                .Include(i => i.Product)
+                .ToListAsync();
+
+            responses.Add(new OrderResponse
+            {
+                Id = order.Id,
+                CustomerName = order.CustomerName,
+                CreatedAt = order.CreatedAt,
+                Items = items.Select(i => new OrderItemResponse
+                {
+                    ProductId = i.ProductId,
+                    ProductName = i.Product.Name,
+                    Quantity = i.Quantity,
+                    PriceDuringOrder = i.PriceDuringOrder
+                }).ToList()
+            });
+        }
+
+        return responses;
+    }
 }
