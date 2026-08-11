@@ -24,7 +24,7 @@ namespace MyApp.Namespace
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult> GetProduct([FromRoute] int id)
+        public async Task<ActionResult> GetProduct([FromRoute] string id)
         {
             var product = await _context.Products.FindAsync(id);
             if (product == null)
