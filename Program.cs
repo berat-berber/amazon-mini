@@ -21,6 +21,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IOrderService, OrderService>();
 
 builder.Services.AddMemoryCache();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 

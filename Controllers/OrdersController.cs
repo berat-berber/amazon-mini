@@ -47,7 +47,7 @@ public class OrdersController : ControllerBase
 
         if (order is null)
         {
-            return NotFound();
+            return Problem(statusCode: 404, title: "Not Found", detail: "Order not found.");
         }
         return Ok(order);
     }
@@ -70,15 +70,15 @@ public class OrdersController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(ex.Message);
+            return Problem(statusCode: 400, title: "Bad Request", detail: ex.Message);
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(ex.Message);
+            return Problem(statusCode: 404, title: "Not Found", detail: ex.Message);
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ex.Message);
+            return Problem(statusCode: 400, title: "Bad Request", detail: ex.Message);
         }
     }
 }

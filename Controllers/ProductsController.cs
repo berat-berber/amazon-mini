@@ -56,7 +56,7 @@ namespace amazonmini.Namespace
 
             if (product == null)
             {
-                return NotFound();
+                return Problem(statusCode: 404, title: "Not Found", detail: "Product not found.");
             }
             return Ok(product);
         }
