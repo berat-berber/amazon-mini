@@ -17,9 +17,16 @@ namespace amazonmini.Namespace
         }
 
         [HttpGet]
-        public async Task<ActionResult> GetProducts()
+        public async Task<ActionResult> GetProducts([FromQuery] string? search)
         {
-            var products = await _context.Products.ToListAsync();
+            var query = _context.Products.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(p => EF.Functions.ILike(p.Name, $"%{search}%"));
+            }
+
+            var products = await query.ToListAsync();
             return Ok(products);
         }
 
