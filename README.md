@@ -55,15 +55,41 @@ Problemi aşağıdaki temel parçalara ayırdım:
 
 ## 3. Database modelini neden bu şekilde oluşturdunuz?
 
-Veritabanı modeli `Product`, `Order` ve `OrderItem` olmak üzere üç temel tablodan oluşur.
+Veritabanı modeli `Products`, `Orders` ve `OrderItems` olmak üzere üç temel tablodan oluşur.
 
-- `Product`, ürünün kimliğini, adını, güncel fiyatını ve stok miktarını tutar.
-- `Order`, siparişin kimliğini, müşteri adını ve oluşturulma zamanını tutar.
-- `OrderItem`, bir siparişte hangi üründen kaç adet bulunduğunu ve ürünün sipariş anındaki fiyatını tutar.
+### Products
+
+Ürün bilgilerini ve güncel stok durumunu tutar:
+
+- `Id`: Primary key ve benzersiz stok kodu
+- `Name`: Ürün adı
+- `Price`: Güncel ürün fiyatı
+- `Quantity`: Mevcut stok miktarı
+
+Fiyat için `decimal`, stok miktarı için `int` kullanılır. Domain kontrolleri fiyatın ve stok miktarının negatif olmasını engeller.
+
+### Orders
+
+Siparişin genel bilgilerini tutar:
+
+- `Id`: GUID biçiminde primary key
+- `CustomerName`: Siparişi veren müşterinin adı
+- `CreatedAt`: Siparişin UTC oluşturulma zamanı
+
+Ürün bilgileri doğrudan `Orders` tablosunda saklanmaz; çünkü bir siparişte birden fazla ürün bulunabilir.
+
+### OrderItems
+
+`Orders` ile `Products` arasındaki ilişkiyi ve sipariş satırına ait bilgileri tutar:
+
+- `OrderId`: Siparişe bağlanan foreign key
+- `ProductId`: Ürüne bağlanan foreign key
+- `Quantity`: Sipariş edilen ürün miktarı
+- `PriceDuringOrder`: Ürünün sipariş anındaki fiyatı
 
 Bir sipariş birden fazla ürün içerebilir, aynı ürün de farklı siparişlerde yer alabilir. Bu çoktan çoğa ilişkiyi ek bilgilerle birlikte temsil etmek için `OrderItem` ara modeli kullanıldı. `OrderId` ve `ProductId` alanlarının birlikte birleşik anahtar olması, aynı ürünün aynı sipariş içinde birden fazla ayrı satır olarak kaydedilmesini engeller.
 
-`PriceDuringOrder` alanı özellikle `OrderItem` üzerinde saklanır. Böylece ürünün güncel fiyatı daha sonra değişse bile geçmiş siparişin toplamı ve sipariş verildiği andaki fiyat bilgisi değişmez.
+`PriceDuringOrder` alanı özellikle `OrderItem` üzerinde saklanır. Böylece ürünün güncel fiyatı daha sonra değişse bile geçmiş siparişin toplamı ve sipariş verildiği andaki fiyat bilgisi değişmez. Sipariş toplamı ayrıca veritabanında saklanmaz; sipariş kalemlerindeki `Quantity * PriceDuringOrder` değerlerinin toplamından hesaplanır.
 
 ## 4. Kod organizasyonunu neden bu şekilde tercih ettiniz?
 
