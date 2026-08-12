@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Src/">
+    <Project Path="Src/amazonmini.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/AmazonMini.Tests.csproj" />
+  </Folder>
+</Solution>
