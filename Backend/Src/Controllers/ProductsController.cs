@@ -31,7 +31,8 @@ namespace amazonmini.Namespace
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var matches = await _context.Products
-                    .Where(p => EF.Functions.ILike(p.Name, $"%{search}%"))
+                    .Where(p => EF.Functions.ILike(p.Name, $"%{search}%") ||
+                                EF.Functions.ILike(p.Id, $"%{search}%"))
                     .ToListAsync();
                 return Ok(matches);
             }
