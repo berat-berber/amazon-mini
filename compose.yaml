@@ -1,0 +1,45 @@
+services:
+  frontend:
+    build:
+      context: ./Frontend
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    environment:
+      VITE_API_URL: "http://localhost:${BACKEND_PORT:-5033}/api"
+    depends_on:
+      backend:
+        condition: service_started
+
+  backend:
+    build:
+      context: ./Backend
+    ports:
+      - "${BACKEND_PORT:-5033}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionString: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-amazonmini};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-amazonmini}"
+      POSTGRES_USER: "${POSTGRES_USER:-postgres}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
