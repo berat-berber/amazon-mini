@@ -1,19 +1,34 @@
-import { useState } from 'react'
-import { mockProducts } from '../mockData'
-
-interface PlacedOrder {
-  customerName: string
-  totalAmount: number
-  lineCount: number
-}
+import { useEffect, useState } from 'react'
+import { createOrder, getProducts, type Order, type Product } from '../api'
 
 export default function CreateOrderView() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
   const [customerName, setCustomerName] = useState('')
   const [qty, setQty] = useState<Record<string, number>>({})
   const [error, setError] = useState<string | null>(null)
-  const [placed, setPlaced] = useState<PlacedOrder | null>(null)
+  const [placing, setPlacing] = useState(false)
+  const [placedOrder, setPlacedOrder] = useState<Order | null>(null)
 
-  const lines = mockProducts
+  const loadProducts = async () => {
+    try {
+      const data = await getProducts()
+      setProducts(data)
+      setLoadError(null)
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Failed to load products')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadProducts()
+  }, [])
+
+  const lines = products
     .filter((p) => (qty[p.id] ?? 0) > 0)
     .map((p) => ({ product: p, quantity: qty[p.id] }))
 
@@ -28,25 +43,32 @@ export default function CreateOrderView() {
     setError(null)
   }
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     if (!customerName.trim()) {
       setError('Customer name is required')
-      setPlaced(null)
       return
     }
     if (lines.length === 0) {
       setError('Select at least one item')
-      setPlaced(null)
       return
     }
-    setPlaced({
-      customerName: customerName.trim(),
-      totalAmount: total,
-      lineCount: lines.length,
-    })
+
+    setPlacing(true)
     setError(null)
-    setCustomerName('')
-    setQty({})
+    try {
+      const order = await createOrder({
+        customerName: customerName.trim(),
+        items: lines.map((l) => ({ productId: l.product.id, quantity: l.quantity })),
+      })
+      setPlacedOrder(order)
+      setCustomerName('')
+      setQty({})
+      loadProducts()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to place order')
+    } finally {
+      setPlacing(false)
+    }
   }
 
   return (
@@ -63,29 +85,34 @@ export default function CreateOrderView() {
         />
       </label>
 
-      <div className="grid">
-        {mockProducts.map((p) => (
-          <div key={p.id} className="card">
-            <h3>{p.name}</h3>
-            <p className="price">${p.price.toFixed(2)}</p>
-            <p className={p.quantity > 0 ? 'stock' : 'stock out'}>
-              {p.quantity > 0 ? `In stock: ${p.quantity}` : 'Out of stock'}
-            </p>
-            <div className="stepper">
-              <button onClick={() => dec(p.id)} disabled={(qty[p.id] ?? 0) === 0}>
-                −
-              </button>
-              <span>{qty[p.id] ?? 0}</span>
-              <button
-                onClick={() => inc(p.id, p.quantity)}
-                disabled={p.quantity === 0 || (qty[p.id] ?? 0) >= p.quantity}
-              >
-                +
-              </button>
+      {loading && <p className="empty">Loading products...</p>}
+      {loadError && <p className="error">{loadError}</p>}
+
+      {!loading && !loadError && (
+        <div className="grid">
+          {products.map((p) => (
+            <div key={p.id} className="card">
+              <h3>{p.name}</h3>
+              <p className="price">${p.price.toFixed(2)}</p>
+              <p className={p.quantity > 0 ? 'stock' : 'stock out'}>
+                {p.quantity > 0 ? `In stock: ${p.quantity}` : 'Out of stock'}
+              </p>
+              <div className="stepper">
+                <button onClick={() => dec(p.id)} disabled={(qty[p.id] ?? 0) === 0}>
+                  −
+                </button>
+                <span>{qty[p.id] ?? 0}</span>
+                <button
+                  onClick={() => inc(p.id, p.quantity)}
+                  disabled={p.quantity === 0 || (qty[p.id] ?? 0) >= p.quantity}
+                >
+                  +
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {lines.length > 0 && (
         <div className="summary">
@@ -105,20 +132,25 @@ export default function CreateOrderView() {
         </div>
       )}
 
-      <button className="primary" onClick={placeOrder}>
-        Place order
+      <button className="primary" onClick={placeOrder} disabled={placing}>
+        {placing ? 'Placing order...' : 'Place order'}
       </button>
 
       {error && <p className="error">{error}</p>}
 
-      {placed && (
+      {placedOrder && (
         <div className="success">
           <h3>Order placed</h3>
           <p>
-            {placed.lineCount} item(s) for {placed.customerName} — total{' '}
-            <strong>${placed.totalAmount.toFixed(2)}</strong>. (This is a mock —
-            no API call yet.)
+            Order <strong>{placedOrder.id}</strong> for {placedOrder.customerName} —
+            <strong> ${placedOrder.totalAmount.toFixed(2)}</strong>
           </p>
+          {placedOrder.items.map((item) => (
+            <p key={item.productId}>
+              {item.productName} × {item.quantity} — $
+              {(item.priceDuringOrder * item.quantity).toFixed(2)}
+            </p>
+          ))}
         </div>
       )}
     </div>

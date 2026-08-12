@@ -1,13 +1,33 @@
-import { useState } from 'react'
-import { mockProducts } from '../mockData'
+import { useEffect, useState } from 'react'
+import { getProducts, type Product } from '../api'
 
 export default function ProductsView() {
   const [search, setSearch] = useState('')
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const term = search.trim().toLowerCase()
-  const filtered = mockProducts.filter((p) =>
-    p.name.toLowerCase().includes(term),
-  )
+  useEffect(() => {
+    let active = true
+    setLoading(true)
+    setError(null)
+
+    const timer = setTimeout(async () => {
+      try {
+        const data = await getProducts(search)
+        if (active) setProducts(data)
+      } catch (err) {
+        if (active) setError(err instanceof Error ? err.message : 'Failed to load products')
+      } finally {
+        if (active) setLoading(false)
+      }
+    }, 300)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [search])
 
   return (
     <div className="view">
@@ -19,19 +39,24 @@ export default function ProductsView() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      <div className="grid">
-        {filtered.map((p) => (
-          <div key={p.id} className="card">
-            <h3>{p.name}</h3>
-            <p className="price">${p.price.toFixed(2)}</p>
-            <p className={p.quantity > 0 ? 'stock' : 'stock out'}>
-              {p.quantity > 0 ? `In stock: ${p.quantity}` : 'Out of stock'}
-            </p>
-          </div>
-        ))}
-      </div>
+      {loading && <p className="empty">Loading products...</p>}
+      {error && <p className="error">{error}</p>}
 
-      {filtered.length === 0 && (
+      {!loading && !error && (
+        <div className="grid">
+          {products.map((p) => (
+            <div key={p.id} className="card">
+              <h3>{p.name}</h3>
+              <p className="price">${p.price.toFixed(2)}</p>
+              <p className={p.quantity > 0 ? 'stock' : 'stock out'}>
+                {p.quantity > 0 ? `In stock: ${p.quantity}` : 'Out of stock'}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && !error && products.length === 0 && (
         <p className="empty">No products match &quot;{search}&quot;</p>
       )}
     </div>

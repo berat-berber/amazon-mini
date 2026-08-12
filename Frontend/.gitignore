@@ -20,6 +20,11 @@ jspm_packages/
 # Distribution directories
 dist/
 
+# Environment variables
+.env
+.env.*
+!.env.example
+
 # Typescript v1 declaration files
 typings/
 
